@@ -1,11 +1,17 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'location_model.dart';
-import 'robot_info_model.dart';
-import 'app_config.dart';
+
+import 'models/location_model.dart';
+import 'models/robot_info_model.dart';
 
 class ApiService {
   final String authHeader; // 從設定帶入 Basic xxx
+  final String baseUrlCommand =
+      "https://api.nuwarobotics.com/v1/rms/mission/robot/command";
+  final String baseUrlRobotInfo =
+      "https://api.nuwarobotics.com/v1/rms/mission/robots";
+  final String baseUrlLocation =
+      "http://152.69.194.121:8000/field-map";
 
   ApiService({required this.authHeader});
 
@@ -19,7 +25,7 @@ class ApiService {
     });
 
     final response = await http.post(
-      Uri.parse(AppConfig.baseUrlCommand),
+      Uri.parse(baseUrlCommand),
       headers: {
         "Authorization": authHeader,
         "Content-Type": "application/json",
@@ -39,7 +45,7 @@ class ApiService {
   // 2️⃣ Get Locations
   Future<List<MapInfo>> getLocations() async {
     final response = await http.get(
-      Uri.parse(AppConfig.baseUrlLocation),
+      Uri.parse(baseUrlLocation),
       headers: {"Authorization": authHeader},
     );
 
@@ -69,7 +75,7 @@ class ApiService {
     });
 
     final response = await http.post(
-      Uri.parse(AppConfig.baseUrlCommand),
+      Uri.parse(baseUrlCommand),
       headers: {
         "Authorization": authHeader,
         "Content-Type": "application/json",
@@ -89,7 +95,7 @@ class ApiService {
   // 4️⃣ Get Robot moveStatus
   Future<RobotInfo> getRobotMoveStatus(String sn) async {
     final response = await http.get(
-      Uri.parse("${AppConfig.baseUrlRobotInfo}?sn=$sn"),
+      Uri.parse("$baseUrlRobotInfo?sn=$sn"),
       headers: {"Authorization": authHeader},
     );
 
@@ -115,7 +121,7 @@ class ApiService {
     });
 
     final response = await http.post(
-      Uri.parse(AppConfig.baseUrlCommand),
+      Uri.parse(baseUrlCommand),
       headers: {
         "Authorization": authHeader,
         "Content-Type": "application/json",

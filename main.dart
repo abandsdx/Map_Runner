@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'api_service.dart';
 import 'navigation_controller.dart';
 import 'widgets/log_console.dart';
-import 'app_config.dart';
 
 void main() {
   runApp(MyApp());
@@ -25,36 +24,38 @@ class NavigationPage extends StatefulWidget {
 }
 
 class _NavigationPageState extends State<NavigationPage> {
-  final ApiService apiService = ApiService(authHeader: AppConfig.authHeader);
+  // Provide a placeholder auth token.
+  // In a real app, this should come from a secure source.
+  final ApiService apiService =
+      ApiService(authHeader: "Basic YOUR_AUTH_TOKEN_HERE");
   NavigationController? controller;
 
   String? selectedMapName;
+  List<String> mapNames = [];
   List<String> logLines = [];
   bool isRunning = false;
-  bool _isCancelled = false;
 
   final TextEditingController snController = TextEditingController(); // 可輸入 SN
 
   final ScrollController scrollController = ScrollController();
 
-  Future<List<String>>? _mapNamesFuture;
-
   @override
   void initState() {
     super.initState();
     controller = NavigationController(apiService, addLog);
-    _mapNamesFuture = loadMapNames();
+    loadMapNames();
   }
 
-  Future<List<String>> loadMapNames() async {
+  Future<void> loadMapNames() async {
     try {
+      // getLocations now returns List<MapInfo>
       final maps = await apiService.getLocations();
-      // Assuming getLocations now returns List<MapInfo>
-      return maps.map((map) => map.mapName).toList();
+      setState(() {
+        // We need to extract the mapName from each MapInfo object
+        mapNames = maps.map((map) => map.mapName).toList();
+      });
     } catch (e) {
       addLog("抓取 MapNames 失敗: $e");
-      // Re-throw the exception to be caught by FutureBuilder
-      throw Exception("Failed to load maps");
     }
   }
 
@@ -68,11 +69,6 @@ class _NavigationPageState extends State<NavigationPage> {
     });
   }
 
-  void cancelNavigation() {
-    setState(() => _isCancelled = true);
-    addLog("正在取消導航...");
-  }
-
   Future<void> startNavigation() async {
     final sn = snController.text.trim();
     if (sn.isEmpty) {
@@ -84,22 +80,11 @@ class _NavigationPageState extends State<NavigationPage> {
       return;
     }
 
-    setState(() {
-      isRunning = true;
-      _isCancelled = false; // Reset cancellation flag
-    });
+    setState(() => isRunning = true);
 
     try {
-      await controller!.startNavigation(
-        sn,
-        selectedMapName!,
-        () => _isCancelled, // Pass a function to check the flag
-      );
-      if (!_isCancelled) {
-        addLog("所有 rLocations 導航完成，任務已完成!");
-      } else {
-        addLog("導航已取消");
-      }
+      await controller!.startNavigation(sn, selectedMapName!);
+      addLog("所有 rLocations 導航完成，任務已完成!");
     } catch (e) {
       addLog("錯誤: $e");
     }
@@ -135,49 +120,23 @@ class _NavigationPageState extends State<NavigationPage> {
               children: [
                 Text("選擇 MapName: "),
                 SizedBox(width: 16),
-                FutureBuilder<List<String>>(
-                  future: _mapNamesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator();
-                    } else if (snapshot.hasError) {
-                      return Text("地圖加載失敗", style: TextStyle(color: Colors.red));
-                    } else if (snapshot.hasData) {
-                      final mapNames = snapshot.data!;
-                      return DropdownButton<String>(
-                        value: selectedMapName,
-                        hint: Text("請選擇"),
-                        items: mapNames.map((name) {
-                          return DropdownMenuItem(
-                            value: name,
-                            child: Text(name),
-                          );
-                        }).toList(),
-                        onChanged: (val) => setState(() => selectedMapName = val),
-                      );
-                    } else {
-                      return Text("沒有可用的地圖");
-                    }
-                  },
+                DropdownButton<String>(
+                  value: selectedMapName,
+                  hint: Text("請選擇"),
+                  items: mapNames.map((name) {
+                    return DropdownMenuItem(
+                      value: name,
+                      child: Text(name),
+                    );
+                  }).toList(),
+                  onChanged: (val) => setState(() => selectedMapName = val),
                 ),
               ],
             ),
             SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: isRunning ? null : startNavigation,
-                  child: Text(isRunning ? "導航中..." : "開始循環導航"),
-                ),
-                SizedBox(width: 16),
-                if (isRunning)
-                  ElevatedButton(
-                    onPressed: cancelNavigation,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    child: Text("取消"),
-                  ),
-              ],
+            ElevatedButton(
+              onPressed: isRunning ? null : startNavigation,
+              child: Text(isRunning ? "導航中..." : "開始循環導航"),
             ),
             SizedBox(height: 16),
             Expanded(
