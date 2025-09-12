@@ -28,8 +28,6 @@ class NavigationPage extends StatefulWidget {
 }
 
 class NavigationPageState extends State<NavigationPage> {
-  // Provide a placeholder auth token.
-  // In a real app, this should come from a secure source.
   final ApiService apiService =
       ApiService(authHeader: "Basic YOUR_AUTH_TOKEN_HERE");
   NavigationController? controller;
@@ -39,8 +37,7 @@ class NavigationPageState extends State<NavigationPage> {
   List<String> logLines = [];
   bool isRunning = false;
 
-  final TextEditingController snController = TextEditingController(); // 可輸入 SN
-
+  final TextEditingController snController = TextEditingController();
   final ScrollController scrollController = ScrollController();
 
   @override
@@ -53,8 +50,8 @@ class NavigationPageState extends State<NavigationPage> {
   Future<void> loadMapNames() async {
     try {
       final maps = await apiService.getLocations();
+      if (!mounted) return; // Check if the widget is still in the tree
       setState(() {
-        // Filter out maps with null names, then get the non-null names.
         mapNames = maps
             .where((map) => map.mapName != null)
             .map((map) => map.mapName!)
@@ -66,8 +63,8 @@ class NavigationPageState extends State<NavigationPage> {
   }
 
   void addLog(String text) {
+    if (!mounted) return;
     setState(() => logLines.add(text));
-    // 自動滾動到底
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController.hasClients) {
         scrollController.jumpTo(scrollController.position.maxScrollExtent);
@@ -86,6 +83,7 @@ class NavigationPageState extends State<NavigationPage> {
       return;
     }
 
+    if (!mounted) return;
     setState(() => isRunning = true);
 
     try {
@@ -95,6 +93,7 @@ class NavigationPageState extends State<NavigationPage> {
       addLog("錯誤: $e");
     }
 
+    if (!mounted) return;
     setState(() => isRunning = false);
   }
 
@@ -103,7 +102,7 @@ class NavigationPageState extends State<NavigationPage> {
     return Scaffold(
       appBar: AppBar(title: const Text("Robot Navigation")),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             Row(
@@ -130,10 +129,7 @@ class NavigationPageState extends State<NavigationPage> {
                   value: selectedMapName,
                   hint: const Text("請選擇"),
                   items: mapNames.map((name) {
-                    return DropdownMenuItem(
-                      value: name,
-                      child: Text(name),
-                    );
+                    return DropdownMenuItem(value: name, child: Text(name));
                   }).toList(),
                   onChanged: (val) => setState(() => selectedMapName = val),
                 ),

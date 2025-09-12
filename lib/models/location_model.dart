@@ -1,7 +1,7 @@
 class Location {
-  final String name;      // 位置名稱 e.g. "R0101"
-  final String type;      // 類型 e.g. "location"
-  final double? x;        // 可選，座標
+  final String name; // 位置名稱 e.g. "R0101"
+  final String type; // 類型 e.g. "location"
+  final double? x; // 可選，座標
   final double? y;
   final double? theta;
 
@@ -44,11 +44,16 @@ class MapInfo {
   });
 
   factory MapInfo.fromJson(Map<String, dynamic> json) {
+    final rLocationsData = json['rLocations'];
+    final locations = (rLocationsData is List)
+        ? rLocationsData
+            .map((e) => Location.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : <Location>[];
+
     return MapInfo(
       mapName: json['mapName'], // This can be null, which is fine now
-      rLocations: (json['rLocations'] as List)
-          .map((e) => Location.fromJson(e))
-          .toList(),
+      rLocations: locations,
     );
   }
 }
