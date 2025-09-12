@@ -11,6 +11,7 @@ class NavigationController {
   NavigationController(this.api, this.log);
 
   Future<void> startNavigation(String sn, String selectedMapName) async {
+    log("[DEBUG] startNavigation called with sn: '$sn', selectedMapName: '$selectedMapName'");
     final now = DateTime.now();
     final missionId = "MCS-${now.year}${_twoDigits(now.month)}${_twoDigits(now.day)}${_twoDigits(now.hour)}${_twoDigits(now.minute)}${_twoDigits(now.second)}";
     final uId = (Random().nextInt(9000) + 1000).toString();
