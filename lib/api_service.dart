@@ -34,10 +34,8 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      print("✅ New Task 成功");
       return true;
     } else {
-      print("❌ New Task 失敗: ${response.body}");
       return false;
     }
   }
@@ -51,11 +49,9 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      print("✅ Locations 載入成功");
       return data.map((json) => MapInfo.fromJson(json)).toList();
     } else {
-      print("❌ Get Locations 失敗: ${response.body}");
-      throw Exception("Get Locations API failed");
+      throw Exception("Get Locations API failed: ${response.body}");
     }
   }
 
@@ -84,10 +80,8 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      print("✅ Navigation 執行成功 → $locationName");
       return true;
     } else {
-      print("❌ Navigation 失敗: ${response.body}");
       return false;
     }
   }
@@ -103,11 +97,9 @@ class ApiService {
       final data = jsonDecode(response.body);
       // Assuming the first item in 'payload' is the robot we want
       final robotData = data["data"]["payload"][0];
-      print("📡 Robot moveStatus: ${robotData['moveStatus']}");
       return RobotInfo.fromJson(robotData);
     } else {
-      print("❌ Get Robot Info 失敗: ${response.body}");
-      throw Exception("Get Robot Info API failed");
+      throw Exception("Get Robot Info API failed: ${response.body}");
     }
   }
 
@@ -130,10 +122,8 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      print("✅ Complete Task 成功");
       return true;
     } else {
-      print("❌ Complete Task 失敗: ${response.body}");
       return false;
     }
   }
