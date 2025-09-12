@@ -67,7 +67,9 @@ class NavigationPageState extends State<NavigationPage> {
 
   Future<void> loadMapNames() async {
     try {
+      addLog("[DEBUG] Calling apiService.getLocations()...");
       final maps = await apiService.getLocations();
+      addLog("[DEBUG] apiService.getLocations() completed.");
       if (!mounted) return;
       setState(() {
         // Reset selection and get unique map names
