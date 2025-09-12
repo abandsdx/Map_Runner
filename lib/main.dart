@@ -29,6 +29,8 @@ class NavigationPage extends StatefulWidget {
 
 class NavigationPageState extends State<NavigationPage> {
   static const String _initialApiKey = "Basic YOUR_AUTH_TOKEN_HERE";
+  static const int _maxRetries = 3;
+  static const Duration _retryDelay = Duration(seconds: 5);
 
   late ApiService apiService;
   late NavigationController controller;
@@ -62,17 +64,14 @@ class NavigationPageState extends State<NavigationPage> {
     });
 
     addLog("API 金鑰已更新，正在重新抓取地圖...");
-    loadMapNames();
+    loadMapNames(); // Start the process
   }
 
-  Future<void> loadMapNames() async {
+  Future<void> loadMapNames({int retryCount = 0}) async {
     try {
-      addLog("[DEBUG] Calling apiService.getLocations()...");
       final maps = await apiService.getLocations();
-      addLog("[DEBUG] apiService.getLocations() completed.");
       if (!mounted) return;
       setState(() {
-        // Reset selection and get unique map names
         selectedMapName = null;
         mapNames = maps
             .where((map) => map.mapName != null)
@@ -80,6 +79,19 @@ class NavigationPageState extends State<NavigationPage> {
             .toSet()
             .toList();
       });
+      if (mapNames.isNotEmpty) {
+        addLog("地圖列表已成功載入!");
+      } else {
+        addLog("未找到可用的地圖。");
+      }
+    } on MapIsProcessingException {
+      if (retryCount < _maxRetries) {
+        addLog("地圖資料生成中，${_retryDelay.inSeconds}秒後重試... (第 ${retryCount + 1} 次)");
+        await Future.delayed(_retryDelay);
+        loadMapNames(retryCount: retryCount + 1);
+      } else {
+        addLog("地圖資料生成超時，請稍後再試。");
+      }
     } catch (e) {
       addLog("抓取 MapNames 失敗: $e");
     }

@@ -3,6 +3,14 @@ import 'package:http/http.dart' as http;
 import 'models/location_model.dart';
 import 'models/robot_info_model.dart';
 
+/// Custom exception for when the map data is being processed by the API.
+class MapIsProcessingException implements Exception {
+  final String message;
+  MapIsProcessingException(this.message);
+  @override
+  String toString() => "MapIsProcessingException: $message";
+}
+
 class ApiService {
   final String authHeader;
   final String baseUrlCommand =
@@ -27,10 +35,14 @@ class ApiService {
   }
 
   Future<List<MapInfo>> getLocations() async {
-    print("[DEBUG] Preparing to call http.get for locations...");
     final response = await http.get(Uri.parse(baseUrlLocation),
         headers: {"Authorization": authHeader});
-    print("[DEBUG] http.get for locations completed with status: ${response.statusCode}");
+
+    // First, check the body for the specific "processing" message.
+    if (response.body.contains('"status":"processing"')) {
+      throw MapIsProcessingException("Map data is being generated.");
+    }
+
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       if (decoded is List) {
