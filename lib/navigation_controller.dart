@@ -18,8 +18,8 @@ class NavigationController {
     await api.newTask(sn, missionId, uId);
 
     log("抓取 Locations...");
-    final allMaps = await api.getLocations();
-    final selectedMap = allMaps.firstWhere(
+    final List<MapInfo> allMaps = await api.getLocations();
+    final MapInfo selectedMap = allMaps.firstWhere(
       (map) => map.mapName == selectedMapName,
       orElse: () => throw Exception("Map '$selectedMapName' not found"),
     );

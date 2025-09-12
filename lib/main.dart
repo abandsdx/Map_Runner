@@ -4,26 +4,30 @@ import 'navigation_controller.dart';
 import 'widgets/log_console.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Robot Navigation',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: NavigationPage(),
+      home: const NavigationPage(),
     );
   }
 }
 
 class NavigationPage extends StatefulWidget {
+  const NavigationPage({super.key});
+
   @override
-  _NavigationPageState createState() => _NavigationPageState();
+  NavigationPageState createState() => NavigationPageState();
 }
 
-class _NavigationPageState extends State<NavigationPage> {
+class NavigationPageState extends State<NavigationPage> {
   // Provide a placeholder auth token.
   // In a real app, this should come from a secure source.
   final ApiService apiService =
@@ -95,19 +99,19 @@ class _NavigationPageState extends State<NavigationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Robot Navigation")),
+      appBar: AppBar(title: const Text("Robot Navigation")),
       body: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Row(
               children: [
-                Text("輸入 SN: "),
-                SizedBox(width: 8),
+                const Text("輸入 SN: "),
+                const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: snController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "請輸入 SN",
                     ),
@@ -115,14 +119,14 @@ class _NavigationPageState extends State<NavigationPage> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
-                Text("選擇 MapName: "),
-                SizedBox(width: 16),
+                const Text("選擇 MapName: "),
+                const SizedBox(width: 16),
                 DropdownButton<String>(
                   value: selectedMapName,
-                  hint: Text("請選擇"),
+                  hint: const Text("請選擇"),
                   items: mapNames.map((name) {
                     return DropdownMenuItem(
                       value: name,
@@ -133,12 +137,12 @@ class _NavigationPageState extends State<NavigationPage> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: isRunning ? null : startNavigation,
               child: Text(isRunning ? "導航中..." : "開始循環導航"),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Expanded(
               child: LogConsole(
                 logLines: logLines,
