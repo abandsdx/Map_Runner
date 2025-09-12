@@ -28,9 +28,10 @@ class NavigationPage extends StatefulWidget {
 }
 
 class NavigationPageState extends State<NavigationPage> {
-  final ApiService apiService =
-      ApiService(authHeader: "Basic YOUR_AUTH_TOKEN_HERE");
-  NavigationController? controller;
+  static const String _initialApiKey = "Basic YOUR_AUTH_TOKEN_HERE";
+
+  late ApiService apiService;
+  late NavigationController controller;
 
   String? selectedMapName;
   List<String> mapNames = [];
@@ -38,23 +39,43 @@ class NavigationPageState extends State<NavigationPage> {
   bool isRunning = false;
 
   final TextEditingController snController = TextEditingController();
+  final TextEditingController apiKeyController = TextEditingController();
   final ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    controller = NavigationController(apiService, addLog);
+    apiKeyController.text = _initialApiKey;
+    _updateApiKey(); // Initial setup using the placeholder
+  }
+
+  void _updateApiKey() {
+    final newApiKey = apiKeyController.text.trim();
+    if (newApiKey.isEmpty) {
+      addLog("API 金鑰不可為空!");
+      return;
+    }
+
+    setState(() {
+      apiService = ApiService(authHeader: newApiKey);
+      controller = NavigationController(apiService, addLog);
+    });
+
+    addLog("API 金鑰已更新，正在重新抓取地圖...");
     loadMapNames();
   }
 
   Future<void> loadMapNames() async {
     try {
       final maps = await apiService.getLocations();
-      if (!mounted) return; // Check if the widget is still in the tree
+      if (!mounted) return;
       setState(() {
+        // Reset selection and get unique map names
+        selectedMapName = null;
         mapNames = maps
             .where((map) => map.mapName != null)
             .map((map) => map.mapName!)
+            .toSet()
             .toList();
       });
     } catch (e) {
@@ -87,7 +108,7 @@ class NavigationPageState extends State<NavigationPage> {
     setState(() => isRunning = true);
 
     try {
-      await controller!.startNavigation(sn, selectedMapName!);
+      await controller.startNavigation(sn, selectedMapName!);
       addLog("所有 rLocations 導航完成，任務已完成!");
     } catch (e) {
       addLog("錯誤: $e");
@@ -105,6 +126,27 @@ class NavigationPageState extends State<NavigationPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Row(
+              children: [
+                const Text("輸入 API 金鑰: "),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: apiKeyController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "請輸入 API 金鑰",
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _updateApiKey,
+                  child: const Text("套用"),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 const Text("輸入 SN: "),
