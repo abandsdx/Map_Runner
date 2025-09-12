@@ -27,8 +27,10 @@ class ApiService {
   }
 
   Future<List<MapInfo>> getLocations() async {
+    print("[DEBUG] Preparing to call http.get for locations...");
     final response = await http.get(Uri.parse(baseUrlLocation),
         headers: {"Authorization": authHeader});
+    print("[DEBUG] http.get for locations completed with status: ${response.statusCode}");
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       if (decoded is List) {
