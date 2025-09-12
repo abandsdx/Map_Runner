@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'api_service.dart';
 import 'models/location_model.dart';
+import 'models/robot_info_model.dart';
 
 class NavigationController {
   final ApiService api;
@@ -34,8 +35,8 @@ class NavigationController {
 
       int moveStatus = -1; // Use -1 as an initial state before the first check
       while (moveStatus != 10) {
-        await Future.delayed(Duration(seconds: 2));
-        final robotInfo = await api.getRobotMoveStatus(sn);
+        await Future.delayed(const Duration(seconds: 2));
+        final RobotInfo robotInfo = await api.getRobotMoveStatus(sn);
         moveStatus = robotInfo.moveStatus;
         log("目前 moveStatus: $moveStatus");
       }
