@@ -16,7 +16,7 @@ class LogConsole extends StatelessWidget {
         controller: scrollController,
         itemCount: logLines.length,
         itemBuilder: (context, index) {
-          return Text(
+          return SelectableText(
             logLines[index],
             style: const TextStyle(color: Colors.white),
           );
