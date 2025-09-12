@@ -24,7 +24,10 @@ class NavigationPage extends StatefulWidget {
 }
 
 class _NavigationPageState extends State<NavigationPage> {
-  final ApiService apiService = ApiService();
+  // Provide a placeholder auth token.
+  // In a real app, this should come from a secure source.
+  final ApiService apiService =
+      ApiService(authHeader: "Basic YOUR_AUTH_TOKEN_HERE");
   NavigationController? controller;
 
   String? selectedMapName;
@@ -45,9 +48,11 @@ class _NavigationPageState extends State<NavigationPage> {
 
   Future<void> loadMapNames() async {
     try {
-      final locations = await apiService.getLocations();
+      // getLocations now returns List<MapInfo>
+      final maps = await apiService.getLocations();
       setState(() {
-        mapNames = locations.map((e) => e["mapName"] as String).toList();
+        // We need to extract the mapName from each MapInfo object
+        mapNames = maps.map((map) => map.mapName).toList();
       });
     } catch (e) {
       addLog("抓取 MapNames 失敗: $e");
