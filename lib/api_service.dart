@@ -35,6 +35,7 @@ class ApiService {
   }
 
   Future<List<MapInfo>> getLocations() async {
+    print("[DEBUG] http.get with authHeader: $authHeader");
     final response = await http.get(Uri.parse(baseUrlLocation),
         headers: {"Authorization": authHeader});
 

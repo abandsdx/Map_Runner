@@ -58,6 +58,8 @@ class NavigationPageState extends State<NavigationPage> {
       return;
     }
 
+    addLog("[DEBUG] 正在套用新的 API 金鑰: $newApiKey");
+
     setState(() {
       apiService = ApiService(authHeader: newApiKey);
       controller = NavigationController(apiService, addLog);
