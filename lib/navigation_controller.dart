@@ -33,8 +33,8 @@ class NavigationController {
       await api.navigation(
           missionId: missionId, uId: uId, sn: sn, locationName: locationName);
 
-      int moveStatus = -1; // Use -1 as an initial state before the first check
-      while (moveStatus != 10) {
+      String moveStatus = ""; // Use empty string as an initial state
+      while (moveStatus != "10") {
         await Future.delayed(const Duration(seconds: 2));
         final RobotInfo robotInfo = await api.getRobotMoveStatus(sn);
         moveStatus = robotInfo.moveStatus;

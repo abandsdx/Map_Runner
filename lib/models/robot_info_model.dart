@@ -1,6 +1,6 @@
 class RobotInfo {
   final String sn;        // 機器人序號
-  final int moveStatus;   // 移動狀態 (10 = 到達)
+  final String moveStatus;   // 移動狀態 (10 = 到達)
 
   RobotInfo({
     required this.sn,
@@ -10,7 +10,7 @@ class RobotInfo {
   factory RobotInfo.fromJson(Map<String, dynamic> json) {
     return RobotInfo(
       sn: json['sn'] ?? '',
-      moveStatus: json['moveStatus'] ?? -1,
+      moveStatus: json['moveStatus']?.toString() ?? '',
     );
   }
 }
