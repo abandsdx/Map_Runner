@@ -35,9 +35,21 @@ class ApiService {
   }
 
   Future<List<MapInfo>> getLocations() async {
-    print("[DEBUG] http.get with authHeader: $authHeader");
-    final response = await http.get(Uri.parse(baseUrlLocation),
-        headers: {"Authorization": authHeader});
+    final url = Uri.parse(baseUrlLocation);
+    final headers = {"Authorization": authHeader};
+
+    print("--- API Request ---");
+    print("Method: GET");
+    print("URL: $url");
+    print("Headers: $headers");
+    print("-------------------");
+
+    final response = await http.get(url, headers: headers);
+
+    print("--- API Response ---");
+    print("Status Code: ${response.statusCode}");
+    print("Body: ${response.body}");
+    print("--------------------");
 
     // First, check the body for the specific "processing" message.
     if (response.body.contains('"status":"processing"')) {
