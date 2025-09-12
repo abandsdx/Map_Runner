@@ -52,11 +52,13 @@ class NavigationPageState extends State<NavigationPage> {
 
   Future<void> loadMapNames() async {
     try {
-      // getLocations now returns List<MapInfo>
       final maps = await apiService.getLocations();
       setState(() {
-        // We need to extract the mapName from each MapInfo object
-        mapNames = maps.map((map) => map.mapName).toList();
+        // Filter out maps with null names, then get the non-null names.
+        mapNames = maps
+            .where((map) => map.mapName != null)
+            .map((map) => map.mapName!)
+            .toList();
       });
     } catch (e) {
       addLog("抓取 MapNames 失敗: $e");

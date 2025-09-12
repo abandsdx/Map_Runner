@@ -35,17 +35,17 @@ class Location {
 }
 
 class MapInfo {
-  final String mapName;
+  final String? mapName;
   final List<Location> rLocations;
 
   MapInfo({
-    required this.mapName,
+    this.mapName,
     required this.rLocations,
   });
 
   factory MapInfo.fromJson(Map<String, dynamic> json) {
     return MapInfo(
-      mapName: json['mapName'],
+      mapName: json['mapName'], // This can be null, which is fine now
       rLocations: (json['rLocations'] as List)
           .map((e) => Location.fromJson(e))
           .toList(),
