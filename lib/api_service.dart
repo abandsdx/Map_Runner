@@ -35,23 +35,9 @@ class ApiService {
   }
 
   Future<List<MapInfo>> getLocations() async {
-    final url = Uri.parse(baseUrlLocation);
-    final headers = {"Authorization": authHeader};
+    final response = await http.get(Uri.parse(baseUrlLocation),
+        headers: {"Authorization": authHeader});
 
-    print("--- API Request ---");
-    print("Method: GET");
-    print("URL: $url");
-    print("Headers: $headers");
-    print("-------------------");
-
-    final response = await http.get(url, headers: headers);
-
-    print("--- API Response ---");
-    print("Status Code: ${response.statusCode}");
-    print("Body: ${response.body}");
-    print("--------------------");
-
-    // First, check the body for the specific "processing" message.
     if (response.body.contains('"status":"processing"')) {
       throw MapIsProcessingException("Map data is being generated.");
     }
@@ -59,11 +45,17 @@ class ApiService {
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       if (decoded is List) {
-        return decoded
-            .map((json) => MapInfo.fromJson(json as Map<String, dynamic>))
-            .toList();
+        // The API returns a List of Fields, and each Field contains a List of Maps.
+        // We need to flatten this structure into a single List<MapInfo>.
+        final List<MapInfo> allMaps = decoded.expand<MapInfo>((fieldJson) {
+          // Parse the outer field object
+          final field = Field.fromJson(fieldJson as Map<String, dynamic>);
+          // Return its inner list of maps, which will be collected by expand.
+          return field.maps;
+        }).toList();
+        return allMaps;
       } else {
-        return [];
+        return []; // Return empty list if the response is not a list.
       }
     } else {
       throw Exception("Get Locations API failed: ${response.body}");

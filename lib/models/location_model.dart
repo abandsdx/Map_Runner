@@ -1,42 +1,7 @@
-class Location {
-  final String name; // 位置名稱 e.g. "R0101"
-  final String type; // 類型 e.g. "location"
-  final double? x; // 可選，座標
-  final double? y;
-  final double? theta;
-
-  Location({
-    required this.name,
-    required this.type,
-    this.x,
-    this.y,
-    this.theta,
-  });
-
-  factory Location.fromJson(Map<String, dynamic> json) {
-    return Location(
-      name: json['name'],
-      type: json['type'],
-      x: (json['x'] as num?)?.toDouble(),
-      y: (json['y'] as num?)?.toDouble(),
-      theta: (json['theta'] as num?)?.toDouble(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'type': type,
-      if (x != null) 'x': x,
-      if (y != null) 'y': y,
-      if (theta != null) 'theta': theta,
-    };
-  }
-}
-
+// Represents a single map's details.
 class MapInfo {
   final String? mapName;
-  final List<Location> rLocations;
+  final List<String> rLocations;
 
   MapInfo({
     this.mapName,
@@ -45,15 +10,36 @@ class MapInfo {
 
   factory MapInfo.fromJson(Map<String, dynamic> json) {
     final rLocationsData = json['rLocations'];
+    // Ensure rLocations are parsed as a list of strings.
     final locations = (rLocationsData is List)
-        ? rLocationsData
-            .map((e) => Location.fromJson(e as Map<String, dynamic>))
-            .toList()
-        : <Location>[];
+        ? List<String>.from(rLocationsData)
+        : <String>[];
 
     return MapInfo(
-      mapName: json['mapName'], // This can be null, which is fine now
+      mapName: json['mapName'],
       rLocations: locations,
+    );
+  }
+}
+
+// Represents a top-level field object from the API, which contains maps.
+class Field {
+  final String fieldName;
+  final List<MapInfo> maps;
+
+  Field({required this.fieldName, required this.maps});
+
+  factory Field.fromJson(Map<String, dynamic> json) {
+    final mapsData = json['maps'];
+    final mapsList = (mapsData is List)
+        ? mapsData
+            .map((mapJson) => MapInfo.fromJson(mapJson as Map<String, dynamic>))
+            .toList()
+        : <MapInfo>[];
+
+    return Field(
+      fieldName: json['fieldName'] ?? 'Unnamed Field',
+      maps: mapsList,
     );
   }
 }

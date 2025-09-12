@@ -25,8 +25,7 @@ class NavigationController {
       (map) => map.mapName == selectedMapName,
       orElse: () => throw Exception("Map '$selectedMapName' not found"),
     );
-    final rLocationNames =
-        selectedMap.rLocations.map((loc) => loc.name).toList();
+    final List<String> rLocationNames = selectedMap.rLocations;
     log("rLocations: ${rLocationNames.join(', ')}");
 
     for (String locationName in rLocationNames) {
