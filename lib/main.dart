@@ -35,12 +35,17 @@ class NavigationPageState extends State<NavigationPage> {
   late ApiService apiService;
   late NavigationController controller;
 
+  // State for maps
   String? selectedMapName;
   List<String> mapNames = [];
+
+  // State for robots
+  String? selectedSn;
+  List<String> robotSns = [];
+
   List<String> logLines = [];
   bool isRunning = false;
 
-  final TextEditingController snController = TextEditingController();
   final TextEditingController apiKeyController = TextEditingController();
   final ScrollController scrollController = ScrollController();
 
@@ -65,8 +70,9 @@ class NavigationPageState extends State<NavigationPage> {
       controller = NavigationController(apiService, addLog);
     });
 
-    addLog("API 金鑰已更新，正在重新抓取地圖...");
-    loadMapNames(); // Start the process
+    addLog("API 金鑰已更新，正在重新抓取資料...");
+    loadMapNames();
+    loadRobots();
   }
 
   Future<void> loadMapNames({int retryCount = 0}) async {
@@ -99,6 +105,25 @@ class NavigationPageState extends State<NavigationPage> {
     }
   }
 
+  Future<void> loadRobots() async {
+    try {
+      addLog("正在獲取機器人列表...");
+      final robots = await apiService.getRobots();
+      if (!mounted) return;
+      setState(() {
+        selectedSn = null;
+        robotSns = robots.map((robot) => robot.sn).toSet().toList();
+      });
+      if (robotSns.isNotEmpty) {
+        addLog("機器人列表已成功載入!");
+      } else {
+        addLog("未找到可用的機器人。");
+      }
+    } catch (e) {
+      addLog("抓取機器人列表失敗: $e");
+    }
+  }
+
   void addLog(String text) {
     if (!mounted) return;
     setState(() => logLines.add(text));
@@ -110,9 +135,9 @@ class NavigationPageState extends State<NavigationPage> {
   }
 
   Future<void> startNavigation() async {
-    final sn = snController.text.trim();
-    if (sn.isEmpty) {
-      addLog("請先輸入 SN!");
+    // Use the selected SN from the dropdown
+    if (selectedSn == null) {
+      addLog("請先選擇機器人 SN!");
       return;
     }
     if (selectedMapName == null) {
@@ -124,7 +149,7 @@ class NavigationPageState extends State<NavigationPage> {
     setState(() => isRunning = true);
 
     try {
-      await controller.startNavigation(sn, selectedMapName!);
+      await controller.startNavigation(selectedSn!, selectedMapName!);
       addLog("所有 rLocations 導航完成，任務已完成!");
     } catch (e) {
       addLog("錯誤: $e");
@@ -165,16 +190,15 @@ class NavigationPageState extends State<NavigationPage> {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Text("輸入 SN: "),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: snController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: "請輸入 SN",
-                    ),
-                  ),
+                const Text("選擇機器人 SN: "),
+                const SizedBox(width: 16),
+                DropdownButton<String>(
+                  value: selectedSn,
+                  hint: const Text("請選擇"),
+                  items: robotSns.map((sn) {
+                    return DropdownMenuItem(value: sn, child: Text(sn));
+                  }).toList(),
+                  onChanged: (val) => setState(() => selectedSn = val),
                 ),
               ],
             ),

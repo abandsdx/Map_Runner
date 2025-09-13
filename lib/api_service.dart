@@ -80,6 +80,24 @@ class ApiService {
     return response.statusCode == 200;
   }
 
+  Future<List<RobotInfo>> getRobots() async {
+    final response = await http.get(Uri.parse(baseUrlRobotInfo),
+        headers: {"Authorization": authHeader});
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final payload = data["data"]["payload"];
+      if (payload is List) {
+        return payload
+            .map((robotJson) =>
+                RobotInfo.fromJson(robotJson as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } else {
+      throw Exception("Get Robots API failed: ${response.body}");
+    }
+  }
+
   Future<RobotInfo> getRobotMoveStatus(String sn) async {
     final response = await http.get(Uri.parse("$baseUrlRobotInfo?sn=$sn"),
         headers: {"Authorization": authHeader});
