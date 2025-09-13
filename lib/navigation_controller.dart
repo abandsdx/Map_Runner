@@ -19,7 +19,7 @@ class NavigationController {
     final uId = (Random().nextInt(9000) + 1000).toString();
 
     final List<NavigationLeg> navigationLegs = [];
-    String status = "Failed"; // Default status
+    String status;
 
     try {
       log("啟動 New Task...");
@@ -62,20 +62,18 @@ class NavigationController {
     } catch (e) {
       log("導航任務失敗: $e");
       status = "Failed: $e";
-      // Re-throw the exception so the UI layer knows about the failure
-      rethrow;
-    } finally {
-      final taskEndTime = DateTime.now();
-      return TaskReport(
-        robotSn: sn,
-        mapName: selectedMapName,
-        missionId: missionId,
-        taskStartTime: taskStartTime,
-        taskEndTime: taskEndTime,
-        status: status,
-        navigationLegs: navigationLegs,
-      );
     }
+
+    final taskEndTime = DateTime.now();
+    return TaskReport(
+      robotSn: sn,
+      mapName: selectedMapName,
+      missionId: missionId,
+      taskStartTime: taskStartTime,
+      taskEndTime: taskEndTime,
+      status: status,
+      navigationLegs: navigationLegs,
+    );
   }
 
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
