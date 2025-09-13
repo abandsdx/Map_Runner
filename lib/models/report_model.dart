@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 // Represents one leg of the navigation journey.
 class NavigationLeg {
   final String targetLocation;

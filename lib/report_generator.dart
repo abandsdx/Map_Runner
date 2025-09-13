@@ -112,15 +112,15 @@ class ReportGenerator {
 
     final List<String> parts = [];
     if (days > 0) {
-      parts.add('${days}天');
+      parts.add('$days天');
     }
     if (hours > 0) {
-      parts.add('${hours}小時');
+      parts.add('$hours小時');
     }
     if (minutes > 0) {
-      parts.add('${minutes}分');
+      parts.add('$minutes分');
     }
-    parts.add('${seconds}秒');
+    parts.add('$seconds秒');
 
     return parts.join(' ');
   }
