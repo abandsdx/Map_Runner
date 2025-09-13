@@ -1,6 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'api_service.dart';
+import 'models/report_model.dart';
 import 'navigation_controller.dart';
+import 'report_generator.dart';
 import 'widgets/log_console.dart';
 
 void main() {
@@ -43,7 +48,9 @@ class NavigationPageState extends State<NavigationPage> {
   String? selectedSn;
   List<String> robotSns = [];
 
+  // State for logging and reports
   List<String> logLines = [];
+  TaskReport? lastTaskReport;
   bool isRunning = false;
 
   final TextEditingController apiKeyController = TextEditingController();
@@ -63,7 +70,8 @@ class NavigationPageState extends State<NavigationPage> {
       return;
     }
 
-    addLog("[DEBUG] 正在套用新的 API 金鑰: $newApiKey");
+    // No need for debug log here anymore
+    // addLog("[DEBUG] 正在套用新的 API 金鑰: $newApiKey");
 
     setState(() {
       apiService = ApiService(authHeader: newApiKey);
@@ -80,6 +88,7 @@ class NavigationPageState extends State<NavigationPage> {
       final maps = await apiService.getLocations();
       if (!mounted) return;
       setState(() {
+        // Reset selection and get unique map names
         selectedMapName = null;
         mapNames = maps
             .where((map) => map.mapName != null)
@@ -135,7 +144,6 @@ class NavigationPageState extends State<NavigationPage> {
   }
 
   Future<void> startNavigation() async {
-    // Use the selected SN from the dropdown
     if (selectedSn == null) {
       addLog("請先選擇機器人 SN!");
       return;
@@ -146,21 +154,56 @@ class NavigationPageState extends State<NavigationPage> {
     }
 
     if (!mounted) return;
-    setState(() => isRunning = true);
+    setState(() {
+      isRunning = true;
+      lastTaskReport = null; // Clear previous report before starting a new run
+    });
 
+    TaskReport? report;
     try {
-      await controller.startNavigation(selectedSn!, selectedMapName!);
-      addLog("所有 rLocations 導航完成，任務已完成!");
+      report = await controller.startNavigation(selectedSn!, selectedMapName!);
     } catch (e) {
-      addLog("錯誤: $e");
+      // The controller already logs the failure and will return a report object
     }
 
     if (!mounted) return;
-    setState(() => isRunning = false);
+    setState(() {
+      isRunning = false;
+      // The report is generated in the controller's finally block, so it should always exist.
+      lastTaskReport = report;
+    });
+  }
+
+  Future<void> _generateAndShareReport() async {
+    if (lastTaskReport == null) {
+      addLog("沒有可用的報告。請先完成一次導航任務。");
+      return;
+    }
+
+    addLog("正在產生報告...");
+    try {
+      final reportHtml = ReportGenerator.generateHtmlReport(lastTaskReport!);
+      final filename = ReportGenerator.generateFilename(lastTaskReport!);
+
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/$filename');
+      await file.writeAsString(reportHtml);
+
+      addLog("報告已產生: $filename");
+      addLog("正在呼叫分享功能...");
+
+      final xFile = XFile(file.path, mimeType: 'text/html');
+      await Share.shareXFiles([xFile], subject: "導航任務報告: ${lastTaskReport!.mapName}");
+    } catch (e) {
+      addLog("產生或分享報告時發生錯誤: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Determine if the report button should be enabled
+    final canGenerateReport = !isRunning && lastTaskReport != null;
+
     return Scaffold(
       appBar: AppBar(title: const Text("Robot Navigation")),
       body: Padding(
@@ -218,9 +261,19 @@ class NavigationPageState extends State<NavigationPage> {
               ],
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: isRunning ? null : startNavigation,
-              child: Text(isRunning ? "導航中..." : "開始循環導航"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: isRunning ? null : startNavigation,
+                  child: Text(isRunning ? "導航中..." : "開始循環導航"),
+                ),
+                const SizedBox(width: 20),
+                ElevatedButton(
+                  onPressed: canGenerateReport ? _generateAndShareReport : null,
+                  child: const Text("產生報告"),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Expanded(
