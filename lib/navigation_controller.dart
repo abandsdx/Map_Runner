@@ -3,6 +3,7 @@ import 'dart:math';
 import 'api_service.dart';
 import 'models/location_model.dart';
 import 'models/robot_info_model.dart';
+import 'models/report_model.dart';
 
 class NavigationController {
   final ApiService api;
@@ -10,42 +11,71 @@ class NavigationController {
 
   NavigationController(this.api, this.log);
 
-  Future<void> startNavigation(String sn, String selectedMapName) async {
+  Future<TaskReport> startNavigation(String sn, String selectedMapName) async {
+    final taskStartTime = DateTime.now();
     log("[DEBUG] startNavigation called with sn: '$sn', selectedMapName: '$selectedMapName'");
-    final now = DateTime.now();
-    final missionId = "MCS-${now.year}${_twoDigits(now.month)}${_twoDigits(now.day)}${_twoDigits(now.hour)}${_twoDigits(now.minute)}${_twoDigits(now.second)}";
+    final missionId =
+        "MCS-${taskStartTime.year}${_twoDigits(taskStartTime.month)}${_twoDigits(taskStartTime.day)}${_twoDigits(taskStartTime.hour)}${_twoDigits(taskStartTime.minute)}${_twoDigits(taskStartTime.second)}";
     final uId = (Random().nextInt(9000) + 1000).toString();
 
-    log("啟動 New Task...");
-    await api.newTask(sn, missionId, uId);
+    final List<NavigationLeg> navigationLegs = [];
+    String status = "Failed"; // Default status
 
-    log("抓取 Locations...");
-    final List<MapInfo> allMaps = await api.getLocations();
-    final MapInfo selectedMap = allMaps.firstWhere(
-      (map) => map.mapName == selectedMapName,
-      orElse: () => throw Exception("Map '$selectedMapName' not found"),
-    );
-    final List<String> rLocationNames = selectedMap.rLocations;
-    log("rLocations: ${rLocationNames.join(', ')}");
+    try {
+      log("啟動 New Task...");
+      await api.newTask(sn, missionId, uId);
 
-    for (String locationName in rLocationNames) {
-      log("導航至: $locationName");
-      await api.navigation(
-          missionId: missionId, uId: uId, sn: sn, locationName: locationName);
+      log("抓取 Locations...");
+      final List<MapInfo> allMaps = await api.getLocations();
+      final MapInfo selectedMap = allMaps.firstWhere(
+        (map) => map.mapName == selectedMapName,
+        orElse: () => throw Exception("Map '$selectedMapName' not found"),
+      );
+      final List<String> rLocationNames = selectedMap.rLocations;
+      log("rLocations: ${rLocationNames.join(', ')}");
 
-      String moveStatus = ""; // Use empty string as an initial state
-      while (moveStatus != "10") {
-        await Future.delayed(const Duration(seconds: 2));
-        final RobotInfo robotInfo = await api.getRobotMoveStatus(sn);
-        moveStatus = robotInfo.moveStatus;
-        log("目前 moveStatus: $moveStatus");
+      for (String locationName in rLocationNames) {
+        final legStartTime = DateTime.now();
+        log("導航至: $locationName (開始時間: ${legStartTime.toIso8601String()})");
+        await api.navigation(
+            missionId: missionId, uId: uId, sn: sn, locationName: locationName);
+
+        String moveStatus = "";
+        while (moveStatus != "10") {
+          await Future.delayed(const Duration(seconds: 2));
+          final RobotInfo robotInfo = await api.getRobotMoveStatus(sn);
+          moveStatus = robotInfo.moveStatus;
+        }
+        final legEndTime = DateTime.now();
+        log("已到達 $locationName (結束時間: ${legEndTime.toIso8601String()})");
+        navigationLegs.add(NavigationLeg(
+          targetLocation: locationName,
+          startTime: legStartTime,
+          endTime: legEndTime,
+        ));
       }
-      log("已到達 $locationName");
-    }
 
-    log("所有 rLocations 導航完成，開始完成任務...");
-    await api.completeTask(sn, missionId, uId);
-    log("任務完成!");
+      log("所有 rLocations 導航完成，開始完成任務...");
+      await api.completeTask(sn, missionId, uId);
+      log("任務完成!");
+      status = "Success";
+    } catch (e) {
+      log("導航任務失敗: $e");
+      status = "Failed: $e";
+      // Re-throw the exception so the UI layer knows about the failure
+      rethrow;
+    } finally {
+      final taskEndTime = DateTime.now();
+      return TaskReport(
+        robotSn: sn,
+        mapName: selectedMapName,
+        missionId: missionId,
+        taskStartTime: taskStartTime,
+        taskEndTime: taskEndTime,
+        status: status,
+        navigationLegs: navigationLegs,
+      );
+    }
   }
 
   String _twoDigits(int n) => n.toString().padLeft(2, '0');

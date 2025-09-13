@@ -45,39 +45,17 @@ class ApiService {
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       if (decoded is List) {
-        // The API returns a List of Fields, and each Field contains a List of Maps.
-        // We need to flatten this structure into a single List<MapInfo>.
         final List<MapInfo> allMaps = decoded.expand<MapInfo>((fieldJson) {
-          // Parse the outer field object
           final field = Field.fromJson(fieldJson as Map<String, dynamic>);
-          // Return its inner list of maps, which will be collected by expand.
           return field.maps;
         }).toList();
         return allMaps;
       } else {
-        return []; // Return empty list if the response is not a list.
+        return [];
       }
     } else {
       throw Exception("Get Locations API failed: ${response.body}");
     }
-  }
-
-  Future<bool> navigation(
-      {required String missionId,
-      required String uId,
-      required String sn,
-      required String locationName}) async {
-    final payload = jsonEncode({
-      "missionId": missionId,
-      "uId": uId,
-      "command": "adapter_navigation",
-      "sn": sn,
-      "location": {"name": locationName, "type": "location"}
-    });
-    final response = await http.post(Uri.parse(baseUrlCommand),
-        headers: {"Authorization": authHeader, "Content-Type": "application/json"},
-        body: payload);
-    return response.statusCode == 200;
   }
 
   Future<List<RobotInfo>> getRobots() async {
@@ -108,6 +86,24 @@ class ApiService {
     } else {
       throw Exception("Get Robot Info API failed: ${response.body}");
     }
+  }
+
+  Future<bool> navigation(
+      {required String missionId,
+      required String uId,
+      required String sn,
+      required String locationName}) async {
+    final payload = jsonEncode({
+      "missionId": missionId,
+      "uId": uId,
+      "command": "adapter_navigation",
+      "sn": sn,
+      "location": {"name": locationName, "type": "location"}
+    });
+    final response = await http.post(Uri.parse(baseUrlCommand),
+        headers: {"Authorization": authHeader, "Content-Type": "application/json"},
+        body: payload);
+    return response.statusCode == 200;
   }
 
   Future<bool> completeTask(String sn, String missionId, String uId) async {
