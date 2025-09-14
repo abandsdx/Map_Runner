@@ -13,7 +13,6 @@ class NavigationController {
 
   Future<TaskReport> startNavigation(String sn, String selectedMapName) async {
     final taskStartTime = DateTime.now();
-    log("[DEBUG] startNavigation called with sn: '$sn', selectedMapName: '$selectedMapName'");
     final missionId =
         "MCS-${taskStartTime.year}${_twoDigits(taskStartTime.month)}${_twoDigits(taskStartTime.day)}${_twoDigits(taskStartTime.hour)}${_twoDigits(taskStartTime.minute)}${_twoDigits(taskStartTime.second)}";
     final uId = (Random().nextInt(9000) + 1000).toString();
