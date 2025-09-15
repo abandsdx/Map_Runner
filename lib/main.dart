@@ -1,7 +1,6 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'api_service.dart';
 import 'models/report_model.dart';
 import 'navigation_controller.dart';
@@ -85,7 +84,6 @@ class NavigationPageState extends State<NavigationPage> {
       final maps = await apiService.getLocations();
       if (!mounted) return;
       setState(() {
-        // Reset selection and get unique map names
         selectedMapName = null;
         mapNames = maps
             .where((map) => map.mapName != null)
@@ -95,8 +93,6 @@ class NavigationPageState extends State<NavigationPage> {
       });
       if (mapNames.isNotEmpty) {
         addLog("地圖列表已成功載入!");
-        // Verification Log: Print the mapUuid of the first map to prove it's parsed.
-        addLog("[VERIFICATION] First map's UUID: ${maps.first.mapUuid}");
       } else {
         addLog("未找到可用的地圖。");
       }
@@ -155,53 +151,54 @@ class NavigationPageState extends State<NavigationPage> {
     if (!mounted) return;
     setState(() {
       isRunning = true;
-      lastTaskReport = null; // Clear previous report before starting a new run
+      lastTaskReport = null;
     });
 
     TaskReport? report;
     try {
       report = await controller.startNavigation(selectedSn!, selectedMapName!);
     } catch (e) {
-      // The controller now returns a report even on failure, so this catch might just be for logging unexpected errors.
-      // The status within the report object will indicate failure.
+      // The controller now returns a report even on failure.
     }
 
     if (!mounted) return;
     setState(() {
       isRunning = false;
-      // The report is generated in the controller, so it should always exist.
       lastTaskReport = report;
     });
   }
 
-  Future<void> _generateAndShareReport() async {
+  Future<void> _generateAndSaveReport() async {
     if (lastTaskReport == null) {
       addLog("沒有可用的報告。請先完成一次導航任務。");
       return;
     }
 
-    addLog("正在產生報告...");
+    addLog("正在準備產生報告...");
     try {
+      // Let the user pick a directory
+      String? outputDirectory = await FilePicker.platform.getDirectoryPath();
+
+      if (outputDirectory == null) {
+        addLog("使用者取消儲存操作。");
+        return;
+      }
+
       final reportHtml = ReportGenerator.generateHtmlReport(lastTaskReport!);
       final filename = ReportGenerator.generateFilename(lastTaskReport!);
+      final filePath = '$outputDirectory${Platform.pathSeparator}$filename';
 
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/$filename');
+      final file = File(filePath);
       await file.writeAsString(reportHtml);
 
-      addLog("報告已產生: $filename");
-      addLog("正在呼叫分享功能...");
-
-      final xFile = XFile(file.path, mimeType: 'text/html');
-      await Share.shareXFiles([xFile], subject: "導航任務報告: ${lastTaskReport!.mapName}");
+      addLog("報告已成功儲存至: $filePath");
     } catch (e) {
-      addLog("產生或分享報告時發生錯誤: $e");
+      addLog("產生或儲存報告時發生錯誤: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Determine if the report button should be enabled
     final canGenerateReport = !isRunning && lastTaskReport != null;
 
     return Scaffold(
@@ -270,7 +267,7 @@ class NavigationPageState extends State<NavigationPage> {
                 ),
                 const SizedBox(width: 20),
                 ElevatedButton(
-                  onPressed: canGenerateReport ? _generateAndShareReport : null,
+                  onPressed: canGenerateReport ? _generateAndSaveReport : null,
                   child: const Text("產生報告"),
                 ),
               ],
