@@ -3,11 +3,15 @@ class NavigationLeg {
   final String targetLocation;
   final DateTime startTime;
   final DateTime endTime;
+  final String? endWifiSsid;
+  final int? endWifiRssi;
 
   NavigationLeg({
     required this.targetLocation,
     required this.startTime,
     required this.endTime,
+    this.endWifiSsid,
+    this.endWifiRssi,
   });
 
   Duration get duration => endTime.difference(startTime);

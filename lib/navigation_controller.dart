@@ -40,10 +40,11 @@ class NavigationController {
             missionId: missionId, uId: uId, sn: sn, locationName: locationName);
 
         String moveStatus = "";
+        RobotInfo? finalRobotInfo;
         while (moveStatus != "10") {
           await Future.delayed(const Duration(seconds: 2));
-          final RobotInfo robotInfo = await api.getRobotMoveStatus(sn);
-          moveStatus = robotInfo.moveStatus;
+          finalRobotInfo = await api.getRobotMoveStatus(sn);
+          moveStatus = finalRobotInfo.moveStatus;
         }
         final legEndTime = DateTime.now();
         log("已到達 $locationName (結束時間: ${legEndTime.toIso8601String()})");
@@ -51,6 +52,8 @@ class NavigationController {
           targetLocation: locationName,
           startTime: legStartTime,
           endTime: legEndTime,
+          endWifiSsid: finalRobotInfo?.wifiSsid,
+          endWifiRssi: finalRobotInfo?.wifiRssi,
         ));
       }
 
