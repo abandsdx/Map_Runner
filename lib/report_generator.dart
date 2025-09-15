@@ -74,12 +74,17 @@ class ReportGenerator {
       final startTime = DateFormat('HH:mm:ss').format(leg.startTime);
       final endTime = DateFormat('HH:mm:ss').format(leg.endTime);
       final duration = _formatDuration(leg.duration);
+      final wifiSsid = leg.endWifiSsid ?? 'N/A';
+      final wifiRssi = leg.endWifiRssi?.toString() ?? 'N/A';
+
       return """
 <tr>
     <td>${leg.targetLocation}</td>
     <td>$startTime</td>
     <td>$endTime</td>
     <td>$duration</td>
+    <td>$wifiSsid</td>
+    <td>$wifiRssi</td>
 </tr>
 """;
     }).join('');
@@ -92,6 +97,8 @@ class ReportGenerator {
             <th>開始時間</th>
             <th>到達時間</th>
             <th>耗時</th>
+            <th>WiFi 名稱</th>
+            <th>WiFi 強度 (RSSI)</th>
         </tr>
     </thead>
     <tbody>
