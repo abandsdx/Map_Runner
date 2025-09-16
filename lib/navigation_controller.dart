@@ -11,18 +11,24 @@ class NavigationController {
 
   NavigationController(this.api, this.log);
 
-  Future<TaskReport> startNavigation(String sn, String selectedMapName) async {
+  Future<TaskReport> startNavigation(
+    String sn,
+    String selectedMapName, {
+    required bool Function() isStopping,
+  }) async {
     final taskStartTime = DateTime.now();
     final missionId =
         "MCS-${taskStartTime.year}${_twoDigits(taskStartTime.month)}${_twoDigits(taskStartTime.day)}${_twoDigits(taskStartTime.hour)}${_twoDigits(taskStartTime.minute)}${_twoDigits(taskStartTime.second)}";
     final uId = (Random().nextInt(9000) + 1000).toString();
 
     final List<NavigationLeg> navigationLegs = [];
-    String status;
+    String status = "Failed"; // Default status
 
     try {
       log("啟動 New Task...");
       await api.newTask(sn, missionId, uId);
+
+      if (isStopping()) throw Exception("Task stopped by user before starting.");
 
       log("抓取 Locations...");
       final List<MapInfo> allMaps = await api.getLocations();
@@ -34,6 +40,13 @@ class NavigationController {
       log("rLocations: ${rLocationNames.join(', ')}");
 
       for (String locationName in rLocationNames) {
+        if (isStopping()) {
+          log("任務已被使用者手動停止。");
+          status = "Stopped by user";
+          await api.stopMovement(sn, missionId, uId);
+          break;
+        }
+
         final legStartTime = DateTime.now();
         log("導航至: $locationName (開始時間: ${legStartTime.toIso8601String()})");
         await api.navigation(
@@ -42,10 +55,19 @@ class NavigationController {
         String moveStatus = "";
         RobotInfo? finalRobotInfo;
         while (moveStatus != "10") {
+          if (isStopping()) break;
           await Future.delayed(const Duration(seconds: 2));
           finalRobotInfo = await api.getRobotMoveStatus(sn);
           moveStatus = finalRobotInfo.moveStatus;
         }
+
+        if (isStopping()) {
+           log("任務在 '$locationName' 中途被使用者手動停止。");
+           status = "Stopped by user";
+           await api.stopMovement(sn, missionId, uId);
+           break;
+        }
+
         final legEndTime = DateTime.now();
         log("已到達 $locationName (結束時間: ${legEndTime.toIso8601String()})");
         navigationLegs.add(NavigationLeg(
@@ -57,10 +79,13 @@ class NavigationController {
         ));
       }
 
-      log("所有 rLocations 導航完成，開始完成任務...");
-      await api.completeTask(sn, missionId, uId);
-      log("任務完成!");
-      status = "Success";
+      // Only mark as success if it wasn't stopped
+      if (status != "Stopped by user") {
+        log("所有 rLocations 導航完成，開始完成任務...");
+        await api.completeTask(sn, missionId, uId);
+        log("任務完成!");
+        status = "Success";
+      }
     } catch (e) {
       log("導航任務失敗: $e");
       status = "Failed: $e";

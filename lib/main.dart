@@ -51,6 +51,7 @@ class NavigationPageState extends State<NavigationPage> {
   List<String> logLines = [];
   TaskReport? lastTaskReport;
   bool isRunning = false;
+  bool _isStopping = false; // Flag to signal stop request
 
   final TextEditingController apiKeyController = TextEditingController();
   final ScrollController scrollController = ScrollController();
@@ -151,20 +152,27 @@ class NavigationPageState extends State<NavigationPage> {
     if (!mounted) return;
     setState(() {
       isRunning = true;
+      _isStopping = false; // Reset stop flag at the beginning
       lastTaskReport = null;
     });
 
-    TaskReport? report;
-    try {
-      report = await controller.startNavigation(selectedSn!, selectedMapName!);
-    } catch (e) {
-      // The controller now returns a report even on failure.
-    }
+    final report = await controller.startNavigation(
+      selectedSn!,
+      selectedMapName!,
+      isStopping: () => _isStopping,
+    );
 
     if (!mounted) return;
     setState(() {
       isRunning = false;
       lastTaskReport = report;
+    });
+  }
+
+  void _stopNavigation() {
+    addLog("正在發送停止命令...");
+    setState(() {
+      _isStopping = true;
     });
   }
 
@@ -176,7 +184,6 @@ class NavigationPageState extends State<NavigationPage> {
 
     addLog("正在準備產生報告...");
     try {
-      // Let the user pick a directory
       String? outputDirectory = await FilePicker.platform.getDirectoryPath();
 
       if (outputDirectory == null) {
@@ -266,6 +273,14 @@ class NavigationPageState extends State<NavigationPage> {
                   child: Text(isRunning ? "導航中..." : "開始循環導航"),
                 ),
                 const SizedBox(width: 20),
+                if (isRunning) ...[
+                  ElevatedButton(
+                    onPressed: _stopNavigation,
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    child: const Text("停止"),
+                  ),
+                  const SizedBox(width: 20),
+                ],
                 ElevatedButton(
                   onPressed: canGenerateReport ? _generateAndSaveReport : null,
                   child: const Text("產生報告"),
