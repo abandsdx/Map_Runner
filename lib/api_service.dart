@@ -118,4 +118,17 @@ class ApiService {
         body: payload);
     return response.statusCode == 200;
   }
+
+  Future<bool> stopMovement(String sn, String missionId, String uId) async {
+    final payload = jsonEncode({
+      "missionId": missionId,
+      "uId": uId,
+      "command": "adapter_stop_task", // NOTE: Assumed command name
+      "sn": sn
+    });
+    final response = await http.post(Uri.parse(baseUrlCommand),
+        headers: {"Authorization": authHeader, "Content-Type": "application/json"},
+        body: payload);
+    return response.statusCode == 200;
+  }
 }
