@@ -57,6 +57,7 @@ class NavigationController {
       }
       // --- END OF NEW LOGIC ---
 
+      final List<String> rLocationNames = selectedMap.rLocations;
       log("rLocations: ${rLocationNames.join(', ')}");
 
       for (String locationName in rLocationNames) {
@@ -99,6 +100,7 @@ class NavigationController {
         ));
       }
 
+      // Only mark as success if it wasn't stopped
       if (status != "Stopped by user") {
         log("所有 rLocations 導航完成，開始完成任務...");
         await api.completeTask(sn, missionId, uId);

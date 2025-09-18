@@ -58,6 +58,7 @@ class NavigationPageState extends State<NavigationPage> {
   TaskReport? lastTaskReport;
   bool isRunning = false;
   bool _isStopping = false;
+  bool _isStopping = false; // Flag to signal stop request
 
   final TextEditingController apiKeyController = TextEditingController();
   final ScrollController scrollController = ScrollController();
@@ -67,6 +68,7 @@ class NavigationPageState extends State<NavigationPage> {
     super.initState();
     apiKeyController.text = _initialApiKey;
     _updateApiKey();
+    _updateApiKey(); // Initial setup using the placeholder
   }
 
   void _updateApiKey() {
@@ -158,7 +160,7 @@ class NavigationPageState extends State<NavigationPage> {
     if (!mounted) return;
     setState(() {
       isRunning = true;
-      _isStopping = false;
+      _isStopping = false; // Reset stop flag at the beginning
       lastTaskReport = null;
     });
 
@@ -221,7 +223,6 @@ class NavigationPageState extends State<NavigationPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // API Key Input
             Row(
               children: [
                 const Text("輸入 API 金鑰: "),
@@ -243,7 +244,6 @@ class NavigationPageState extends State<NavigationPage> {
               ],
             ),
             const SizedBox(height: 16),
-            // Robot Selection
             Row(
               children: [
                 const Text("選擇機器人 SN: "),
@@ -259,7 +259,6 @@ class NavigationPageState extends State<NavigationPage> {
               ],
             ),
             const SizedBox(height: 16),
-            // Map Selection
             Row(
               children: [
                 const Text("選擇 MapName: "),
@@ -306,6 +305,15 @@ class NavigationPageState extends State<NavigationPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (isRunning)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: isRunning ? null : startNavigation,
+                  child: Text(isRunning ? "導航中..." : "開始循環導航"),
+                ),
+                const SizedBox(width: 20),
+                if (isRunning) ...[
                   ElevatedButton(
                     onPressed: _stopNavigation,
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -317,6 +325,9 @@ class NavigationPageState extends State<NavigationPage> {
                     child: const Text("開始循環導航"),
                   ),
                 const SizedBox(width: 20),
+                  ),
+                  const SizedBox(width: 20),
+                ],
                 ElevatedButton(
                   onPressed: canGenerateReport ? _generateAndSaveReport : null,
                   child: const Text("產生報告"),
@@ -324,7 +335,6 @@ class NavigationPageState extends State<NavigationPage> {
               ],
             ),
             const SizedBox(height: 16),
-            // Log Console
             Expanded(
               child: LogConsole(
                 logLines: logLines,
