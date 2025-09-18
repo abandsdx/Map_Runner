@@ -39,8 +39,9 @@ class NavigationController {
         orElse: () => throw Exception("Map '$selectedMapName' not found"),
       );
 
-      // --- NEW LOGIC FOR NAVIGATION ORDER ---
-      final List<String> rLocationNames = List.from(selectedMap.rLocations); // Create a mutable copy
+      // Create a mutable copy of the locations list to be modified.
+      final List<String> rLocationNames = List.from(selectedMap.rLocations);
+
       switch (navigationOrder) {
         case NavigationOrder.sorted:
           rLocationNames.sort();
@@ -51,13 +52,11 @@ class NavigationController {
           log("導航順序: 隨機");
           break;
         case NavigationOrder.api:
-        default:
           log("導航順序: API 預設");
           break;
+        // No default case needed as all enum values are handled.
       }
-      // --- END OF NEW LOGIC ---
 
-      final List<String> rLocationNames = selectedMap.rLocations;
       log("rLocations: ${rLocationNames.join(', ')}");
 
       for (String locationName in rLocationNames) {
@@ -100,7 +99,6 @@ class NavigationController {
         ));
       }
 
-      // Only mark as success if it wasn't stopped
       if (status != "Stopped by user") {
         log("所有 rLocations 導航完成，開始完成任務...");
         await api.completeTask(sn, missionId, uId);
