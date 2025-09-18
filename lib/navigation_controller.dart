@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'api_service.dart';
+import 'main.dart'; // Import to get NavigationOrder enum
 import 'models/location_model.dart';
 import 'models/robot_info_model.dart';
 import 'models/report_model.dart';
@@ -14,6 +15,7 @@ class NavigationController {
   Future<TaskReport> startNavigation(
     String sn,
     String selectedMapName, {
+    required NavigationOrder navigationOrder,
     required bool Function() isStopping,
   }) async {
     final taskStartTime = DateTime.now();
@@ -36,6 +38,25 @@ class NavigationController {
         (map) => map.mapName == selectedMapName,
         orElse: () => throw Exception("Map '$selectedMapName' not found"),
       );
+
+      // --- NEW LOGIC FOR NAVIGATION ORDER ---
+      final List<String> rLocationNames = List.from(selectedMap.rLocations); // Create a mutable copy
+      switch (navigationOrder) {
+        case NavigationOrder.sorted:
+          rLocationNames.sort();
+          log("導航順序: 已排序");
+          break;
+        case NavigationOrder.random:
+          rLocationNames.shuffle();
+          log("導航順序: 隨機");
+          break;
+        case NavigationOrder.api:
+        default:
+          log("導航順序: API 預設");
+          break;
+      }
+      // --- END OF NEW LOGIC ---
+
       final List<String> rLocationNames = selectedMap.rLocations;
       log("rLocations: ${rLocationNames.join(', ')}");
 

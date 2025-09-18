@@ -7,6 +7,9 @@ import 'navigation_controller.dart';
 import 'report_generator.dart';
 import 'widgets/log_console.dart';
 
+// Enum for the new navigation order feature
+enum NavigationOrder { api, sorted, random }
+
 void main() {
   runApp(const MyApp());
 }
@@ -47,10 +50,14 @@ class NavigationPageState extends State<NavigationPage> {
   String? selectedSn;
   List<String> robotSns = [];
 
+  // State for navigation order
+  NavigationOrder _selectedOrder = NavigationOrder.api;
+
   // State for logging and reports
   List<String> logLines = [];
   TaskReport? lastTaskReport;
   bool isRunning = false;
+  bool _isStopping = false;
   bool _isStopping = false; // Flag to signal stop request
 
   final TextEditingController apiKeyController = TextEditingController();
@@ -60,6 +67,7 @@ class NavigationPageState extends State<NavigationPage> {
   void initState() {
     super.initState();
     apiKeyController.text = _initialApiKey;
+    _updateApiKey();
     _updateApiKey(); // Initial setup using the placeholder
   }
 
@@ -159,6 +167,7 @@ class NavigationPageState extends State<NavigationPage> {
     final report = await controller.startNavigation(
       selectedSn!,
       selectedMapName!,
+      navigationOrder: _selectedOrder,
       isStopping: () => _isStopping,
     );
 
@@ -265,6 +274,37 @@ class NavigationPageState extends State<NavigationPage> {
               ],
             ),
             const SizedBox(height: 16),
+            // Navigation Order Selection
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("導航順序: "),
+                Radio<NavigationOrder>(
+                  value: NavigationOrder.api,
+                  groupValue: _selectedOrder,
+                  onChanged: (value) => setState(() => _selectedOrder = value!),
+                ),
+                const Text('預設'),
+                Radio<NavigationOrder>(
+                  value: NavigationOrder.sorted,
+                  groupValue: _selectedOrder,
+                  onChanged: (value) => setState(() => _selectedOrder = value!),
+                ),
+                const Text('排序'),
+                Radio<NavigationOrder>(
+                  value: NavigationOrder.random,
+                  groupValue: _selectedOrder,
+                  onChanged: (value) => setState(() => _selectedOrder = value!),
+                ),
+                const Text('隨機'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Action Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isRunning)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -278,6 +318,13 @@ class NavigationPageState extends State<NavigationPage> {
                     onPressed: _stopNavigation,
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                     child: const Text("停止"),
+                  )
+                else
+                  ElevatedButton(
+                    onPressed: startNavigation,
+                    child: const Text("開始循環導航"),
+                  ),
+                const SizedBox(width: 20),
                   ),
                   const SizedBox(width: 20),
                 ],
