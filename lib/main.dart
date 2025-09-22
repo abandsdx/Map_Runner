@@ -342,7 +342,9 @@ class _NavigationOrderSelector extends StatelessWidget {
           child: RadioListTile<NavigationOrder>(
             title: const Text('預設'),
             value: NavigationOrder.api,
+            // ignore: deprecated_member_use
             groupValue: selectedOrder,
+            // ignore: deprecated_member_use
             onChanged: onOrderChanged,
           ),
         ),
@@ -350,7 +352,9 @@ class _NavigationOrderSelector extends StatelessWidget {
           child: RadioListTile<NavigationOrder>(
             title: const Text('排序'),
             value: NavigationOrder.sorted,
+            // ignore: deprecated_member_use
             groupValue: selectedOrder,
+            // ignore: deprecated_member_use
             onChanged: onOrderChanged,
           ),
         ),
@@ -358,7 +362,9 @@ class _NavigationOrderSelector extends StatelessWidget {
           child: RadioListTile<NavigationOrder>(
             title: const Text('隨機'),
             value: NavigationOrder.random,
+            // ignore: deprecated_member_use
             groupValue: selectedOrder,
+            // ignore: deprecated_member_use
             onChanged: onOrderChanged,
           ),
         ),
