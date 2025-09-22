@@ -276,35 +276,13 @@ class NavigationPageState extends State<NavigationPage> {
             ),
             const SizedBox(height: 16),
             // Navigation Order Selection
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("導航順序: "),
-                Expanded(
-                  child: RadioListTile<NavigationOrder>(
-                    title: const Text('預設'),
-                    value: NavigationOrder.api,
-                    groupValue: _selectedOrder,
-                    onChanged: (value) => setState(() => _selectedOrder = value!),
-                  ),
-                ),
-                Expanded(
-                  child: RadioListTile<NavigationOrder>(
-                    title: const Text('排序'),
-                    value: NavigationOrder.sorted,
-                    groupValue: _selectedOrder,
-                    onChanged: (value) => setState(() => _selectedOrder = value!),
-                  ),
-                ),
-                Expanded(
-                  child: RadioListTile<NavigationOrder>(
-                    title: const Text('隨機'),
-                    value: NavigationOrder.random,
-                    groupValue: _selectedOrder,
-                    onChanged: (value) => setState(() => _selectedOrder = value!),
-                  ),
-                ),
-              ],
+            _NavigationOrderSelector(
+              selectedOrder: _selectedOrder,
+              onOrderChanged: (value) {
+                if (value != null) {
+                  setState(() => _selectedOrder = value);
+                }
+              },
             ),
             const SizedBox(height: 16),
             // Action Buttons
@@ -340,6 +318,51 @@ class NavigationPageState extends State<NavigationPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// A private widget to encapsulate the radio button logic.
+class _NavigationOrderSelector extends StatelessWidget {
+  const _NavigationOrderSelector({
+    required this.selectedOrder,
+    required this.onOrderChanged,
+  });
+
+  final NavigationOrder selectedOrder;
+  final ValueChanged<NavigationOrder?> onOrderChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("導航順序: "),
+        Expanded(
+          child: RadioListTile<NavigationOrder>(
+            title: const Text('預設'),
+            value: NavigationOrder.api,
+            groupValue: selectedOrder,
+            onChanged: onOrderChanged,
+          ),
+        ),
+        Expanded(
+          child: RadioListTile<NavigationOrder>(
+            title: const Text('排序'),
+            value: NavigationOrder.sorted,
+            groupValue: selectedOrder,
+            onChanged: onOrderChanged,
+          ),
+        ),
+        Expanded(
+          child: RadioListTile<NavigationOrder>(
+            title: const Text('隨機'),
+            value: NavigationOrder.random,
+            groupValue: selectedOrder,
+            onChanged: onOrderChanged,
+          ),
+        ),
+      ],
     );
   }
 }
