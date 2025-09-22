@@ -8,7 +8,7 @@ import 'report_generator.dart';
 import 'widgets/log_console.dart';
 
 // Enum for the new navigation order feature
-enum NavigationOrder { api, sorted, random }
+enum NavigationOrder { sorted, random }
 
 void main() {
   runApp(const MyApp());
@@ -51,7 +51,7 @@ class NavigationPageState extends State<NavigationPage> {
   List<String> robotSns = [];
 
   // State for navigation order
-  NavigationOrder _selectedOrder = NavigationOrder.api;
+  NavigationOrder _selectedOrder = NavigationOrder.sorted;
 
   // State for logging and reports
   List<String> logLines = [];
@@ -338,16 +338,6 @@ class _NavigationOrderSelector extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Text("導航順序: "),
-        Expanded(
-          child: RadioListTile<NavigationOrder>(
-            title: const Text('預設'),
-            value: NavigationOrder.api,
-            // ignore: deprecated_member_use
-            groupValue: selectedOrder,
-            // ignore: deprecated_member_use
-            onChanged: onOrderChanged,
-          ),
-        ),
         Expanded(
           child: RadioListTile<NavigationOrder>(
             title: const Text('排序'),

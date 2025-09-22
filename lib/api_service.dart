@@ -120,15 +120,37 @@ class ApiService {
   }
 
   Future<bool> stopMovement(String sn, String missionId, String uId) async {
-    final payload = jsonEncode({
+    // Step 1: Send 'adapter_navigation_stop'
+    final stopPayload = jsonEncode({
       "missionId": missionId,
       "uId": uId,
-      "command": "adapter_stop_task", // NOTE: Assumed command name
+      "command": "adapter_navigation_stop",
       "sn": sn
     });
-    final response = await http.post(Uri.parse(baseUrlCommand),
+    final stopResponse = await http.post(Uri.parse(baseUrlCommand),
         headers: {"Authorization": authHeader, "Content-Type": "application/json"},
-        body: payload);
-    return response.statusCode == 200;
+        body: stopPayload);
+
+    if (stopResponse.statusCode != 200) {
+      // Maybe log this failure or handle it more gracefully
+      return false;
+    }
+
+    // Optional: Add a small delay between commands if needed
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Step 2: Send 'adapter_interrupt_task'
+    final interruptPayload = jsonEncode({
+      "missionId": missionId,
+      "uId": uId,
+      "command": "adapter_interrupt_task",
+      "sn": sn
+    });
+    final interruptResponse = await http.post(Uri.parse(baseUrlCommand),
+        headers: {"Authorization": authHeader, "Content-Type": "application/json"},
+        body: interruptPayload);
+
+    // Return true only if the second command is also successful
+    return interruptResponse.statusCode == 200;
   }
 }
