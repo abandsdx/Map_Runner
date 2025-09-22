@@ -51,9 +51,6 @@ class NavigationController {
           rLocationNames.shuffle();
           log("導航順序: 隨機");
           break;
-        case NavigationOrder.api:
-          log("導航順序: API 預設");
-          break;
         // No default case needed as all enum values are handled.
       }
 
