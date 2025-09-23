@@ -38,6 +38,8 @@ class NavigationPageState extends State<NavigationPage> {
   static const String _initialApiKey = "Basic YOUR_AUTH_TOKEN_HERE";
   static const int _maxRetries = 3;
   static const Duration _retryDelay = Duration(seconds: 5);
+  static const int _maxLogLines = 1000;
+  static const int _logLinesToRemove = 100;
 
   late ApiService apiService;
   late NavigationController controller;
@@ -137,7 +139,12 @@ class NavigationPageState extends State<NavigationPage> {
 
   void addLog(String text) {
     if (!mounted) return;
-    setState(() => logLines.add(text));
+    setState(() {
+      if (logLines.length > _maxLogLines) {
+        logLines.removeRange(0, _logLinesToRemove);
+      }
+      logLines.add(text);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController.hasClients) {
         scrollController.jumpTo(scrollController.position.maxScrollExtent);
@@ -209,6 +216,13 @@ class NavigationPageState extends State<NavigationPage> {
     } catch (e) {
       addLog("產生或儲存報告時發生錯誤: $e");
     }
+  }
+
+  void _clearLogs() {
+    setState(() {
+      logLines.clear();
+      addLog("日誌已手動清除。");
+    });
   }
 
   @override
@@ -304,6 +318,11 @@ class NavigationPageState extends State<NavigationPage> {
                 ElevatedButton(
                   onPressed: canGenerateReport ? _generateAndSaveReport : null,
                   child: const Text("產生報告"),
+                ),
+                const SizedBox(width: 20),
+                ElevatedButton(
+                  onPressed: _clearLogs,
+                  child: const Text("清除日誌"),
                 ),
               ],
             ),
